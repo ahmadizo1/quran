@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.ahmadizo.quran",
+        "sha256_cert_fingerprints": ["34:C0:F4:62:77:D8:1E:A6:1A:44:B4:38:91:32:1D:28:6C:38:38:73:81:4D:AB:8A:92:1E:4E:87:8D:F0:BE:51"]
+      }
+    }]
