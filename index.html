@@ -13,29 +13,45 @@
 <style>
 :root{--bg:#f6f4ef;--card:#fff;--text:#1d2a24;--muted:#6b7a72;--accent:#1f6f50;--line:#e2ded3;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#121816;--card:#1b2420;--text:#e8efe9;--muted:#93a39a;--accent:#4fb88c;--line:#2b3731;color-scheme:dark}}
+:root[data-theme="light"]{--bg:#f6f4ef;--card:#fff;--text:#1d2a24;--muted:#6b7a72;--accent:#1f6f50;--line:#e2ded3;color-scheme:light}
+:root[data-theme="dark"]{--bg:#121816;--card:#1b2420;--text:#e8efe9;--muted:#93a39a;--accent:#4fb88c;--line:#2b3731;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px;max-width:560px;margin-inline:auto}
 h1{font-size:1.3rem;margin:8px 0 16px}
+h2{font-size:1.05rem;margin:0 0 10px}
+.hdr{display:flex;justify-content:space-between;align-items:center}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
 .item{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .item:last-child{border-bottom:0}
 .item.on{color:var(--accent);font-weight:600}
 .ar{font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",serif;font-size:1.3rem}
 .sub{color:var(--muted);font-size:.85rem}
+.ok{color:var(--accent);font-size:.75rem;font-weight:600}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-button.b,select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer}
+.set{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+button.b,select,a.b{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer}
 button.b.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+a.b{text-decoration:none;display:inline-block}
 button.play{background:var(--accent);color:#fff;border:0;border-radius:50%;width:56px;height:56px;font-size:1.3rem;cursor:pointer}
 input[type=range]{width:100%;accent-color:var(--accent)}
+#q{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;margin:10px 0 8px}
 .t{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem}
 #msg{color:#c0392b;font-size:.9rem;margin-top:8px;min-height:1em}
 [hidden]{display:none!important}
-a.b{text-decoration:none;display:inline-block}
-#q{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;margin-bottom:8px}
 </style>
 </head>
 <body>
-<h1>My Quran Recordings</h1>
+<div class="hdr"><h1>My Quran Recordings</h1><button class="b" id="gear" aria-label="Settings">⚙ Settings</button></div>
+
+<div class="card" id="settings" hidden>
+  <h2>Settings</h2>
+  <div class="set"><label for="sTheme">Theme</label><select id="sTheme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+  <div class="set"><label for="sSpeed">Default speed</label><select id="sSpeed"></select></div>
+  <div class="set"><label for="sSkip">Skip buttons</label><select id="sSkip"></select></div>
+  <div class="set"><label for="sNext">Play next surah automatically</label><input type="checkbox" id="sNext"></div>
+  <div class="set"><span>Storage used by app</span><b id="used">—</b></div>
+  <div class="row"><button class="b" id="delAll">Delete all downloads</button><button class="b" id="resetPos">Forget saved positions</button></div>
+</div>
 
 <div class="card" id="player">
   <div class="ar" id="nowAr">—</div>
@@ -48,19 +64,22 @@ a.b{text-decoration:none;display:inline-block}
     <button class="b" id="fwd">+10s</button>
   </div>
   <div class="row">
-    <select id="speed" aria-label="Speed">
-      <option value="0.5">0.5×</option><option value="0.75">0.75×</option>
-      <option value="1" selected>1×</option><option value="1.25">1.25×</option>
-      <option value="1.5">1.5×</option><option value="2">2×</option>
-    </select>
+    <select id="speed" aria-label="Speed"></select>
     <button class="b" id="loop">Repeat surah</button>
     <button class="b" id="ab">Set A</button>
-    <a class="b" id="dl" download hidden>Download</a>
+  </div>
+  <div class="row">
+    <button class="b" id="off" hidden>Save offline</button>
+    <a class="b" id="dl" download hidden>Save file to phone</a>
   </div>
   <div id="msg"></div>
 </div>
 
-<div class="card"><input id="q" type="search" placeholder="Search surah name or number" aria-label="Search"><div id="list"></div></div>
+<div class="card">
+  <div class="row" style="margin:0"><button class="b on" id="tAll">All</button><button class="b" id="tOff">Downloaded <span id="cnt"></span></button></div>
+  <input id="q" type="search" placeholder="Search surah name or number" aria-label="Search">
+  <div id="list"></div>
+</div>
 <audio id="a" preload="metadata"></audio>
 
 <script>
@@ -74,38 +93,105 @@ const SURAHS = [
 ];
 
 const $ = id => document.getElementById(id);
-const a = $("a"); let idx = -1, A = null, B = null, abState = 0;
+const a = $("a"); let idx = -1, A = null, B = null, abState = 0, tab = "all", objUrl = null;
+const saved = new Set(), CN = "quran-audio", hasCache = "caches" in window;
+const key = s => new URL(s.file, location.href).href;
 const fmt = s => isFinite(s) ? Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0") : "0:00";
 const store = {
   get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
+let stored = {}; try{ stored = JSON.parse(store.get("cfg")||"{}"); }catch(e){}
+const cfg = Object.assign({theme:"auto", speed:1, skip:10, next:true}, stored);
+
+function applyCfg(){
+  const r = document.documentElement;
+  if(cfg.theme==="auto") r.removeAttribute("data-theme"); else r.dataset.theme = cfg.theme;
+  $("back").textContent = "−"+cfg.skip+"s"; $("fwd").textContent = "+"+cfg.skip+"s";
+  store.set("cfg", JSON.stringify(cfg));
+}
+[0.5,0.75,1,1.25,1.5,2].forEach(v => ["speed","sSpeed"].forEach(id => {
+  const o = document.createElement("option"); o.value = v; o.textContent = v+"×"; $(id).appendChild(o); }));
+[5,10,15,30].forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v+" seconds"; $("sSkip").appendChild(o); });
+$("sTheme").value = cfg.theme; $("sSpeed").value = cfg.speed; $("speed").value = cfg.speed;
+$("sSkip").value = cfg.skip; $("sNext").checked = cfg.next; applyCfg();
+$("sTheme").onchange = e => { cfg.theme = e.target.value; applyCfg(); };
+$("sSpeed").onchange = e => { cfg.speed = +e.target.value; $("speed").value = cfg.speed; a.playbackRate = cfg.speed; applyCfg(); };
+$("sSkip").onchange = e => { cfg.skip = +e.target.value; applyCfg(); };
+$("sNext").onchange = e => { cfg.next = e.target.checked; applyCfg(); };
+$("gear").onclick = () => { $("settings").hidden = !$("settings").hidden; usage(); };
+
+async function usage(){
+  try{ const e = await navigator.storage.estimate(); $("used").textContent = Math.round((e.usage||0)/1048576)+" MB"; }
+  catch(e){ $("used").textContent = "—"; }
+}
+async function refreshSaved(){
+  saved.clear();
+  if(hasCache){ try{ (await (await caches.open(CN)).keys()).forEach(r => saved.add(r.url)); }catch(e){} }
+  render(); updOff(); usage();
+}
+function updOff(){
+  const b = $("off");
+  if(idx<0 || !hasCache){ b.hidden = true; return; }
+  b.hidden = false; b.textContent = saved.has(key(SURAHS[idx])) ? "Remove offline copy" : "Save offline";
+}
+async function saveOff(){
+  if(idx<0 || !hasCache) return;
+  const s = SURAHS[idx], b = $("off");
+  try{
+    if(saved.has(key(s))) await (await caches.open(CN)).delete(key(s));
+    else{
+      b.disabled = true; b.textContent = "Saving… please wait";
+      const r = await fetch(s.file); if(!r.ok) throw new Error("bad");
+      await (await caches.open(CN)).put(key(s), r);
+      if(navigator.storage && navigator.storage.persist) navigator.storage.persist();
+    }
+  }catch(e){ $("msg").textContent = "Could not save offline. Check your connection and that the audio file exists."; }
+  b.disabled = false; refreshSaved();
+}
+$("off").onclick = saveOff;
+$("delAll").onclick = async () => {
+  if(!confirm("Delete all downloaded recordings from this app?")) return;
+  try{ await caches.delete(CN); }catch(e){} refreshSaved();
+};
+$("resetPos").onclick = () => SURAHS.forEach(s => { try{ localStorage.removeItem("pos"+s.n); }catch(e){} });
 
 function render(){
   const q = $("q").value.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g,"");
-  const rows = SURAHS.map((s,i)=>({s,i})).filter(({s}) =>
-    !q || (String(s.n)+s.en.toLowerCase().replace(/[^a-z0-9]/g,"")+s.ar.replace(/[^\u0600-\u06FF]/g,"")).includes(q));
-  $("list").innerHTML = rows.length ? rows.map(({s,i})=>
-    `<button class="item ${i===idx?"on":""}" data-i="${i}"><span>${s.n}. ${s.en}</span><span class="ar">${s.ar}</span></button>`
-  ).join("") : '<div class="sub" style="padding:12px">No match</div>';
+  const rows = SURAHS.map((s,i)=>({s,i})).filter(({s}) => (tab==="all" || saved.has(key(s))) &&
+    (!q || (String(s.n)+s.en.toLowerCase().replace(/[^a-z0-9]/g,"")+s.ar.replace(/[^\u0600-\u06FF]/g,"")).includes(q)));
+  $("cnt").textContent = saved.size ? "("+saved.size+")" : "";
+  $("tAll").classList.toggle("on", tab==="all"); $("tOff").classList.toggle("on", tab==="off");
+  $("list").innerHTML = rows.length ? rows.map(({s,i}) =>
+    `<button class="item ${i===idx?"on":""}" data-i="${i}"><span>${s.n}. ${s.en}${saved.has(key(s))?' <span class="ok">✓ offline</span>':""}</span><span class="ar">${s.ar}</span></button>`
+  ).join("") : `<div class="sub" style="padding:12px">${tab==="off" ? "Nothing downloaded yet. Open a surah and tap “Save offline”." : "No match"}</div>`;
 }
-function load(i, autoplay){
+$("tAll").onclick = () => { tab = "all"; render(); };
+$("tOff").onclick = () => { tab = "off"; render(); };
+
+async function load(i, autoplay){
   idx = i; const s = SURAHS[i];
-  a.src = s.file; $("msg").textContent = "";
-  const dl = $("dl"); dl.href = s.file; dl.download = s.en.replace(/\W+/g,"-")+".mp3"; dl.hidden = false;
+  $("msg").textContent = "";
   $("nowAr").textContent = s.ar; $("nowEn").textContent = s.n+". "+s.en;
   A = B = null; abState = 0; $("ab").textContent = "Set A"; $("ab").classList.remove("on");
-  a.playbackRate = parseFloat($("speed").value);
-  const saved = parseFloat(store.get("pos"+s.n)||0);
-  a.addEventListener("loadedmetadata", function f(){ if(saved>0 && saved<a.duration-3) a.currentTime = saved; a.removeEventListener("loadedmetadata", f); });
-  store.set("last", i); render();
+  if(objUrl){ URL.revokeObjectURL(objUrl); objUrl = null; }
+  let src = s.file;
+  if(hasCache && saved.has(key(s))){
+    try{ const m = await (await caches.open(CN)).match(key(s)); if(m){ objUrl = URL.createObjectURL(await m.blob()); src = objUrl; } }catch(e){}
+  }
+  if(idx !== i) return;
+  a.src = src; a.playbackRate = parseFloat($("speed").value);
+  const pos = parseFloat(store.get("pos"+s.n)||0);
+  a.addEventListener("loadedmetadata", function f(){ if(pos>0 && pos<a.duration-3) a.currentTime = pos; a.removeEventListener("loadedmetadata", f); });
+  const dl = $("dl"); dl.href = s.file; dl.download = s.en.replace(/\W+/g,"-")+".mp3"; dl.hidden = false;
+  store.set("last", i); render(); updOff();
   if(autoplay) a.play().catch(()=>{});
   if("mediaSession" in navigator) navigator.mediaSession.metadata = new MediaMetadata({title:s.en, artist:"My recordings"});
 }
 $("list").onclick = e => { const b = e.target.closest(".item"); if(b) load(+b.dataset.i, true); };
 $("pp").onclick = () => { if(idx<0) return load(0,true); a.paused ? a.play().catch(()=>{}) : a.pause(); };
-$("back").onclick = () => a.currentTime = Math.max(0, a.currentTime-10);
-$("fwd").onclick = () => a.currentTime = Math.min(a.duration||0, a.currentTime+10);
+$("back").onclick = () => a.currentTime = Math.max(0, a.currentTime-cfg.skip);
+$("fwd").onclick = () => a.currentTime = Math.min(a.duration||0, a.currentTime+cfg.skip);
 $("speed").onchange = () => a.playbackRate = parseFloat($("speed").value);
 $("loop").onclick = () => { a.loop = !a.loop; $("loop").classList.toggle("on", a.loop); };
 $("ab").onclick = () => {
@@ -123,14 +209,12 @@ a.ontimeupdate = () => {
   $("cur").textContent = fmt(a.currentTime); $("dur").textContent = fmt(a.duration);
   if(idx>=0 && Math.floor(a.currentTime)%3===0) store.set("pos"+SURAHS[idx].n, a.currentTime);
 };
-a.onended = () => { if(!a.loop && idx<SURAHS.length-1) load(idx+1, true); };
-a.onerror = () => { $("msg").textContent = "Audio not found. Add the file: " + SURAHS[idx].file; };
+a.onended = () => { if(!a.loop && cfg.next && idx<SURAHS.length-1) load(idx+1, true); };
+a.onerror = () => { if(idx>=0) $("msg").textContent = "Audio not found. Add the file: " + SURAHS[idx].file; };
 
 $("q").oninput = render;
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
-render();
-const last = parseInt(store.get("last"));
-if(!isNaN(last) && SURAHS[last]) load(last, false);
+refreshSaved().then(() => { const last = parseInt(store.get("last")); if(!isNaN(last) && SURAHS[last]) load(last, false); });
 </script>
 </body>
 </html>
