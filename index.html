@@ -57,6 +57,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .ctl{display:flex;justify-content:center;align-items:center;gap:20px;margin:22px 0}
 .play{width:76px;height:76px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:1.8rem;cursor:pointer}
 .chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.play svg{width:34px;height:34px}
+#mini button svg{width:20px;height:20px}
+.btn:disabled{cursor:default}
 #more{margin-top:18px;display:flex;flex-direction:column;gap:10px}
 #msg{color:#c0392b;font-size:.9rem;text-align:center;margin-top:12px;min-height:1em}
 [hidden]{display:none!important}
@@ -182,24 +185,41 @@ async function refreshSaved(){
   if(hasCache){ try{ (await (await caches.open(CN)).keys()).forEach(r => saved.add(r.url)); }catch(e){} }
   render(); updOff(); usage();
 }
+let busy = null, busyTxt = "", busyPct = 0;
 function updOff(){
   const b = $("off");
   if(idx<0 || !hasCache){ b.hidden = true; return; }
-  b.hidden = false; b.textContent = saved.has(key(SURAHS[idx])) ? "Remove offline copy" : "Save offline";
+  const k = key(SURAHS[idx]); b.hidden = false; b.style.backgroundImage = "";
+  if(busy){
+    b.disabled = true;
+    if(busy===k){ b.textContent = busyTxt; b.style.backgroundImage = "linear-gradient(90deg,rgba(79,184,140,.45) "+busyPct+"%,transparent "+busyPct+"%)"; }
+    else b.textContent = "Saving another surah…";
+    return;
+  }
+  b.disabled = false; b.textContent = saved.has(k) ? "Remove offline copy" : "Save offline";
 }
 $("off").onclick = async () => {
-  if(idx<0 || !hasCache) return;
-  const s = SURAHS[idx], b = $("off");
+  if(idx<0 || !hasCache || busy) return;
+  const s = SURAHS[idx], k = key(s);
   try{
-    if(saved.has(key(s))) await (await caches.open(CN)).delete(key(s));
+    if(saved.has(k)) await (await caches.open(CN)).delete(k);
     else{
-      b.disabled = true; b.textContent = "Saving… please wait";
+      busy = k; busyTxt = "Saving… 0%"; busyPct = 0; updOff();
       const r = await fetch(s.file); if(!r.ok) throw new Error("bad");
-      await (await caches.open(CN)).put(key(s), r);
+      const total = +r.headers.get("content-length") || 0, type = r.headers.get("content-type") || "audio/mpeg";
+      const rd = r.body.getReader(), parts = []; let got = 0;
+      for(;;){
+        const {done, value} = await rd.read(); if(done) break;
+        parts.push(value); got += value.length;
+        busyPct = total ? Math.min(99, Math.floor(got/total*100)) : 0;
+        busyTxt = "Saving… " + (total ? busyPct+"%" : Math.round(got/1048576)+" MB"); updOff();
+      }
+      busyTxt = "Finishing…"; busyPct = 100; updOff();
+      await (await caches.open(CN)).put(k, new Response(new Blob(parts,{type:type}), {headers:{"Content-Type":type}}));
       if(navigator.storage && navigator.storage.persist) navigator.storage.persist();
     }
   }catch(e){ $("msg").textContent = "Could not save offline. Check your connection and that the audio file exists."; }
-  b.disabled = false; refreshSaved();
+  busy = null; refreshSaved();
 };
 $("delAll").onclick = async () => {
   if(!confirm("Delete all downloaded recordings from this app?")) return;
@@ -242,7 +262,10 @@ async function load(i, autoplay){
   if("mediaSession" in navigator) navigator.mediaSession.metadata = new MediaMetadata({title:s.en, artist:APP.name});
 }
 
-const setPP = t => { $("pp").textContent = t; $("miniPP").textContent = t; };
+const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+const setPP = t => { $("pp").innerHTML = t; $("miniPP").innerHTML = t; };
+setPP(PLAY);
 const toggle = () => { if(idx<0) return; a.paused ? a.play().catch(()=>{}) : a.pause(); };
 $("pp").onclick = toggle; $("miniPP").onclick = e => { e.stopPropagation(); toggle(); };
 $("back").onclick = () => a.currentTime = Math.max(0, a.currentTime-cfg.skip);
@@ -258,8 +281,8 @@ $("ab").onclick = () => {
   $("ab").textContent = AB_TXT[abState]; $("ab").classList.toggle("on", abState===2);
 };
 $("seek").oninput = () => { if(a.duration) a.currentTime = a.duration*$("seek").value/100; };
-a.onplay = () => setPP("⏸");
-a.onpause = () => setPP("▶");
+a.onplay = () => setPP(PAUSE);
+a.onpause = () => setPP(PLAY);
 a.ontimeupdate = () => {
   if(abState===2 && B!==null && a.currentTime>=B) a.currentTime = A;
   if(a.duration) $("seek").value = a.currentTime/a.duration*100;
